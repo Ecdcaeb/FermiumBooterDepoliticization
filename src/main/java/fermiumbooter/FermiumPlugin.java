@@ -1,80 +1,61 @@
 package fermiumbooter;
 
+import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
 import java.util.function.Supplier;
 
-import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.spongepowered.asm.launch.MixinBootstrap;
-import org.spongepowered.asm.mixin.Mixins;
 
+@Deprecated
 @IFMLLoadingPlugin.Name("FermiumBooter")
-@IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.SortingIndex(990)
-public class FermiumPlugin implements IFMLLoadingPlugin {
+public class FermiumPlugin implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
 
-	public static final Logger LOGGER = LogManager.getLogger("FermiumBooter");
+	public static final Logger LOGGER = LogManager.getLogger("FermiumBooterDepoliticization");
 
-	public FermiumPlugin() {
-		MixinBootstrap.init();
-		MixinExtrasBootstrap.init();
-		Mixins.addConfiguration("mixins.fermiumbooter.init.json");
-	}
-
-	@Override
-	public String[] getASMTransformerClass()
-	{
-		return new String[0];
-	}
+	public static File source = null;
 	
-	@Override
-	public String getModContainerClass()
-	{
-		return null;
-	}
-	
-	@Override
-	public String getSetupClass()
-	{
-		return null;
+	@Override public String[] getASMTransformerClass(){return null;}
+	@Override public String getModContainerClass() {return "fermiumbooter.FermiumBooter"; }
+	@Override public String getSetupClass(){return null;}
+	@Override public String getAccessTransformerClass() {return null;}
+	@Override public void injectData(Map<String, Object> data) {
+		source = (File) data.get("coremodLocation");
 	}
 
-	/**
-	 * Handle actually parsing and adding the early configurations here, as it gets called after all other plugins are initialized
-	 */
 	@Override
-	public void injectData(Map<String, Object> data) {
-		for(Map.Entry<String, List<Supplier<Boolean>>> entry : FermiumRegistryAPI.getEarlyMixins().entrySet()) {
-			//Check for removals
-			if(FermiumRegistryAPI.getRejectMixins().contains(entry.getKey())) {
-				LOGGER.warn("FermiumBooter received removal of \"" + entry.getKey() + "\" for early mixin application, rejecting.");
-				continue;
-			}
-			//Check for enabled
-			Boolean enabled = null;
-			for(Supplier<Boolean> supplier : entry.getValue()) {
-				if(Boolean.TRUE.equals(enabled)) continue;//Short circuit OR
-				Boolean supplied = supplier.get();
-				if(supplied == null) LOGGER.warn("FermiumBooter received null value for individual supplier from \"" + entry.getKey() + "\" for early mixin application.");
-				else enabled = supplied;
-			}
-			if(enabled == null) {
-				LOGGER.warn("FermiumBooter received null value for suppliers from \"" + entry.getKey() + "\" for early mixin application, ignoring.");
-				continue;
-			}
-			//Add configuration
-			if(enabled) {
-				LOGGER.info("FermiumBooter adding \"" + entry.getKey() + "\" for early mixin application.");
-				Mixins.addConfiguration(entry.getKey());
-			}
+    public List<String> getMixinConfigs(){
+		return Arrays.asList(FermiumRegistryAPI.getEarlyMixins().entrySet().toArray(new String[0]));
+	}
+
+	@Override
+    public boolean shouldMixinConfigQueue(String mixinConfig) {
+        if (FermiumRegistryAPI.getRejectMixins().contains(mixinConfig)) {
+			LOGGER.warn("FermiumBooter received removal of \"" + mixinConfig + "\" for early mixin application, rejecting.");
+			return false;
+		} else {
+			List<Supplier<Boolean>> list = FermiumRegistryAPI.getEarlyMixins().get(mixinConfig);
+			if (list != null) {
+				Boolean enabled = null;
+				for(Supplier<Boolean> supplier : list) {
+					Boolean supplied = supplier.get();
+					if (supplied == Boolean.TRUE) {
+						LOGGER.info("FermiumBooter adding \"" + mixinConfig + "\" for early mixin application.");
+						return true;
+					}
+					else if (supplied == null) LOGGER.warn("FermiumBooter received null value for individual supplier from \"" + mixinConfig + "\" for early mixin application.");
+					else enabled = Boolean.FALSE;
+				}
+				if(enabled == null) {
+					LOGGER.warn("FermiumBooter received null value for suppliers from \"" + mixinConfig + "\" for early mixin application, ignoring.");
+				}
+				return false;
+			} else return true;
 		}
-	}
-	
-	@Override
-	public String getAccessTransformerClass() {
-		return null;
-	}
+    }
 }
