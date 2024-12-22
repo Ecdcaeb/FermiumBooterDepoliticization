@@ -30,7 +30,7 @@ public class FermiumPlugin implements IFMLLoadingPlugin, zone.rong.mixinbooter.I
 
 	@Override
     public List<String> getMixinConfigs(){
-		return Arrays.asList(FermiumRegistryAPI.getEarlyMixins().entrySet().toArray(new String[0]));
+		return Arrays.asList(FermiumRegistryAPI.getEarlyMixins().keySet().toArray(new String[0]));
 	}
 
 	@Override

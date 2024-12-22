@@ -39,7 +39,7 @@ public class FermiumBooter extends net.minecraftforge.fml.common.DummyModContain
     
     @Override
     public List<String> getMixinConfigs(){
-		return Arrays.asList(FermiumRegistryAPI.getLateMixins().entrySet().toArray(new String[0]));
+		return Arrays.asList(FermiumRegistryAPI.getLateMixins().keySet().toArray(new String[0]));
 	}
 
 	@Override
