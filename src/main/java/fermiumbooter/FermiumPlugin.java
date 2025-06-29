@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 @Deprecated
 @IFMLLoadingPlugin.Name("FermiumBooter")
 @IFMLLoadingPlugin.SortingIndex(990)
+@IFMLLoadingPlugin.DependsOn("MixinBooter")
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
   static {

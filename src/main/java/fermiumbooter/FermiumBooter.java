@@ -5,6 +5,9 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 import net.minecraftforge.fml.common.ModMetadata;
 import net.minecraftforge.fml.common.event.FMLConstructionEvent;
+import net.minecraftforge.fml.common.versioning.VersionRange;
+import net.minecraftforge.fml.common.versioning.DefaultArtifactVersion;
+import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 
 /**
  * Layer without codes from Fermium
@@ -45,11 +48,10 @@ public class FermiumBooter
   }
 
   @Override
-  public Set<net.minecraftforge.fml.common.versioning.ArtifactVersion>
+  public Set<ArtifactVersion>
   getRequirements() {
     return Collections.singleton(
-        new net.minecraftforge.fml.common.versioning.DefaultArtifactVersion(
-            "mixinbooter"));
+        new DefaultArtifactVersion("mixinbooter", VersionRange.createFromVersionSpec("[10,)")));
   }
 
   @Override
