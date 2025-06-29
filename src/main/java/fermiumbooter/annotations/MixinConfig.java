@@ -10,7 +10,7 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 public @interface MixinConfig {
 
-	String name();
+	String name() default "";
 
 	@Retention(RetentionPolicy.RUNTIME)
 	@Target(ElementType.FIELD)
