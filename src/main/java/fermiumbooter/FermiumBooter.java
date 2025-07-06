@@ -48,18 +48,6 @@ public class FermiumBooter
   }
 
   @Override
-  public Set<ArtifactVersion>
-  getRequirements() {
-      try {
-    return Collections.singleton(
-        new DefaultArtifactVersion("mixinbooter", VersionRange.createFromVersionSpec("[10,)")));
-      } catch (Throwable t) {
-          return Collections.singleton(
-        new DefaultArtifactVersion("mixinbooter", true));
-      }
-  }
-
-  @Override
   public List<String> getMixinConfigs() {
     return Arrays.asList(
         FermiumRegistryAPI.getLateMixins().keySet().toArray(new String[0]));
