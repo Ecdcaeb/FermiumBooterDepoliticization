@@ -87,8 +87,8 @@ public class DiscoveryHandler {
                     Path rep = itr.next();
                     String name = root.relativize(rep).toString();
                     if (classFile.matcher(name).find()) {
-                        try (BufferedReader bufferedReader = Files.newBufferedReader(rep)) {
-                            ClassReader classReader = new ClassReader(IOUtils.toByteArray(bufferedReader, StandardCharsets.UTF_8));
+                        try (InputStream inputStream = Files.newInputStream(rep)) {
+                            ClassReader classReader = new ClassReader(inputStream);
                             ClassNode classNode = new ClassNode();
                             classReader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
