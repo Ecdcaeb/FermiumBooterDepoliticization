@@ -89,7 +89,7 @@ public abstract class FermiumRegistryAPI {
       return;
     }
     // Process rejects prior to application
-    if (late) {
+    if (late && !FBConfig.Utils.forcedEarlyMixinConfigAdditionsSet.contains(configuration)) {
       LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for late mixin enqueue, adding.");
       lateMixins.put(configuration, supplier);
     } else {

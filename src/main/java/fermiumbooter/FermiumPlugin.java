@@ -52,12 +52,12 @@ public class FermiumPlugin
       makeFMLCorePluginContainsFMLMod(source);
     DiscoveryHandler discoveryHandler = new DiscoveryHandler();
     discoveryHandler.build();
-    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("net/minecraftforge/fml/common/Mod")) {
+    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lnet/minecraftforge/fml/common/Mod;")) {
       if (asmData.values != null && asmData.values.containsKey("modid")) {
         FermiumRegistryAPI.mods.add((String) asmData.values.get("modid"));
       }
     }
-    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("fermiumbooter/annotations/MixinConfig")) {
+    for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lfermiumbooter/annotations/MixinConfig;")) {
       if (asmData.values != null && asmData.values.containsKey("name")) {
         try {
           FermiumRegistryAPI.registerAnnotatedMixinConfig(Class.forName(asmData.className.replace('/', '.'), true, Launch.classLoader), null);
@@ -65,6 +65,9 @@ public class FermiumPlugin
           LOGGER.error(t);
         }
       }
+    }
+    for (String str : FBConfig.forcedEarlyMixinConfigRemovals) {
+      FermiumRegistryAPI.removeMixin(str.trim());
     }
   }
 

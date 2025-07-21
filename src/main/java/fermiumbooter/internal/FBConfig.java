@@ -1,9 +1,21 @@
 package fermiumbooter.internal;
 
-@net.minecraftforge.common.config.Config(modid = "fermiumbooter")
+import net.minecraftforge.common.config.Config;
+import java.util.*;
+
+@Config(modid = "fermiumbooter")
 public class FBConfig {
 	
-	@net.minecraftforge.common.config.Config.Name("Override Mixin Config Compatibility Checks")
-	@net.minecraftforge.common.config.Config.RequiresMcRestart
+	@Config.Name("Override Mixin Config Compatibility Checks")
 	public static boolean overrideMixinCompatibilityChecks = false;
+
+	@Config.Name("Forced Early Mixin Config Additions")
+	public static String[] forcedEarlyMixinConfigAdditions = {};
+	
+	@Config.Name("Forced Early Mixin Config Removals")
+	public static String[] forcedEarlyMixinConfigRemovals = {};
+
+	public static class Utils {
+		public static final Set<String> forcedEarlyMixinConfigAdditionsSet = new HashSet<>(Arrays.asList(FBConfig.forcedEarlyMixinConfigAdditions));
+	}
 }
