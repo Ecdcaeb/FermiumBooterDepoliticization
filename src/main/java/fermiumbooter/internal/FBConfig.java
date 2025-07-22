@@ -15,6 +15,12 @@ public class FBConfig {
 	@Config.Name("Forced Early Mixin Config Removals")
 	public static String[] forcedEarlyMixinConfigRemovals = {};
 
+	@Config.Name("Display UpdateHelper at Log")
+	public static boolean displayUpdateHelperAtLog = false;
+
+	@Config.Name("Display Mixin Compatibility Checks at Screen")
+	public static boolean displayMixinCompatibilityChecksAtScreen = false;
+
 	public static class Utils {
 		public static final Set<String> forcedEarlyMixinConfigAdditionsSet = new HashSet<>(Arrays.asList(FBConfig.forcedEarlyMixinConfigAdditions));
 	}

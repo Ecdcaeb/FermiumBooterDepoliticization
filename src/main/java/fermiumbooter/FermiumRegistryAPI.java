@@ -6,8 +6,9 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
+import fermiumbooter.internal.UpdateHelper;
 
-import fermiumbooter.internal.ConfigAnytimeX;
+import com.cleanroommc.configanytime.ConfigAnytime;
 import fermiumbooter.internal.FBConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +82,7 @@ public abstract class FermiumRegistryAPI {
   public static void enqueueMixin(boolean late, String configuration, BooleanSupplier supplier) {
     checkState();
     if (configuration == null || configuration.trim().isEmpty()) {
-      LOGGER.debug("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
+      LOGGER.error("FermiumRegistryAPI supplied null or empty configuration name during mixin enqueue, ignoring.");
       return;
     }
     if (supplier == null) { // Do not evaluate supplier.get() itself for null now
@@ -134,7 +135,8 @@ public abstract class FermiumRegistryAPI {
   // crazy config handler, fermuim is too crazy.
   // removed at fermuim 1.3
   public static <T> void registerAnnotatedMixinConfig(Class<T> clazz, T instance) {
-    ConfigAnytimeX.register(clazz); // wtf a instance here?
+    UpdateHelper.onModRegisterV1_2Config(clazz.getName());
+    ConfigAnytime.register(clazz); // wtf a instance here?
     searchForMixinConfig(clazz, instance);
   }
 
@@ -170,6 +172,7 @@ public abstract class FermiumRegistryAPI {
         enqueueMixin(false, earlyMixin.name(), ()->
         {
           if(FBConfig.overrideMixinCompatibilityChecks) {
+            boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
                 LOGGER.error(
@@ -179,9 +182,12 @@ public abstract class FermiumRegistryAPI {
                   compat.desired() ? "without" : "with", 
                   compat.modid(), compat.reason());
                 if (compat.disableMixin()) {
-                  return false;
+                  disableMixin = true;
                 }
               }
+            }
+            if (disableMixin) {
+              return false;
             }
           }
           try {
@@ -197,6 +203,7 @@ public abstract class FermiumRegistryAPI {
         enqueueMixin(true, earlyMixin.name(), ()->
         {
           if(FBConfig.overrideMixinCompatibilityChecks) {
+            boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
                 LOGGER.error(
@@ -206,9 +213,12 @@ public abstract class FermiumRegistryAPI {
                   compat.desired() ? "without" : "with", 
                   compat.modid(), compat.reason());
                 if (compat.disableMixin()) {
-                  return false;
+                  disableMixin = true;
                 }
               }
+            }
+            if (disableMixin) {
+              return false;
             }
           }
           try {

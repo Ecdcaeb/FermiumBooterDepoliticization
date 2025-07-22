@@ -34,12 +34,14 @@ public class DiscoveryHandler {
     public static class ASMData {
         public final File source;
         public final String className;
+        public final ClassNode classNode;
         public final String annName;
         public final Map<String, Object> values;
 
-        public ASMData(File source, String className, String annName, Map<String, Object> values) {
+        public ASMData(File source, String className, ClassNode classNode, String annName, Map<String, Object> values) {
             this.source = source;
             this.className = className;
+            this.classNode = classNode;
             this.annName = annName;
             this.values = values;
         }
@@ -93,16 +95,16 @@ public class DiscoveryHandler {
                             classReader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
 
                             if (classNode.interfaces != null) for (String itf : classNode.interfaces) {
-                                this.datas.put(itf, new ASMData(modFile, classNode.name, itf, null));
+                                this.datas.put(itf, new ASMData(modFile, classNode.name, classNode, itf, null));
                             }
 
                             if (classNode.visibleAnnotations != null) for (AnnotationNode annotationNode: classNode.visibleAnnotations) {
                                 if (annotationNode.values == null || annotationNode.values.isEmpty()) {
-                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, annotationNode.desc, null));
+                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null));
                                 } else {
                                     HashMap<String, Object> maps = new HashMap<>();
                                     annotationNode.accept(new ModAnnotationVisitor(maps));
-                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, annotationNode.desc, maps));
+                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
                                 }
                             }
                         }
