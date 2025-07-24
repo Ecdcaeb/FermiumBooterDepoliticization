@@ -65,7 +65,7 @@ public class DiscoveryHandler {
                     fs = FileSystems.newFileSystem(modFile.toPath(), (ClassLoader) null);
                     root = fs.getPath("/");
                 }
-                catch (IOException e)
+                catch (Throwable e)
                 {
                     FermiumPlugin.LOGGER.error("Error loading FileSystem from jar: ", e);
                     return;
