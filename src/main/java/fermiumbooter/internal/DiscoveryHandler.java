@@ -107,12 +107,14 @@ public class DiscoveryHandler {
                                     this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
                                 }
                             }
+                        } catch (Throwable tb) {
+                            FermiumPlugin.LOGGER.error("Encounter a bad class, ignore.", tb);
                         }
                     }
                 }
-            } catch (IOException e)
+            } catch (Throwable tb1)
             {
-                FermiumPlugin.LOGGER.error(e);
+                FermiumPlugin.LOGGER.error("Could not scan modFile {}", modFile.getAbsolutePath(), tb1);
             }
         }
         finally
