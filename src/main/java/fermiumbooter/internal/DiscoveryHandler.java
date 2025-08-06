@@ -21,10 +21,8 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -53,75 +51,85 @@ public class DiscoveryHandler {
     public static final int ASM = SystemUtils.IS_JAVA_1_8 ? (5 << 16 | 0 << 8) : (9 << 16 | 0 << 8); // ASM5 : ASM9
 
     public void addFor(File modFile) {
-        FileSystem fs = null;
-        try
-        {
-            Path root = null;
-
-            if (modFile.isFile())
-            {
-                try
-                {
-                    fs = FileSystems.newFileSystem(modFile.toPath(), (ClassLoader) null);
-                    root = fs.getPath("/");
-                }
-                catch (Throwable e)
-                {
-                    FermiumPlugin.LOGGER.error("Error loading FileSystem from jar: ", e);
-                    return;
-                }
-            }
-            else if (modFile.isDirectory())
-            {
-                root = modFile.toPath();
-            }
-
-            if (root == null || !Files.exists(root))
-                return;
-
-
-            Iterator<Path> itr;
-            try(Stream<Path> stream = Files.walk(root))
-            {
-                itr = stream.filter(Files::isReadable).iterator();
-                while (itr.hasNext())
-                {
-                    Path rep = itr.next();
-                    String name = root.relativize(rep).toString();
-                    if (classFile.matcher(name).find()) {
-                        try (InputStream inputStream = Files.newInputStream(rep)) {
-                            ClassReader classReader = new ClassReader(inputStream);
-                            ClassNode classNode = new ClassNode();
-                            classReader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-
-                            if (classNode.interfaces != null) for (String itf : classNode.interfaces) {
-                                this.datas.put(itf, new ASMData(modFile, classNode.name, classNode, itf, null));
-                            }
-
-                            if (classNode.visibleAnnotations != null) for (AnnotationNode annotationNode: classNode.visibleAnnotations) {
-                                if (annotationNode.values == null || annotationNode.values.isEmpty()) {
-                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null));
-                                } else {
-                                    HashMap<String, Object> maps = new HashMap<>();
-                                    annotationNode.accept(new ModAnnotationVisitor(maps));
-                                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
-                                }
-                            }
-                        } catch (Throwable tb) {
-                            FermiumPlugin.LOGGER.error("Encounter a bad class, ignore.", tb);
-                        }
-                    }
-                }
-            } catch (Throwable tb1)
-            {
-                FermiumPlugin.LOGGER.error("Could not scan modFile {}", modFile.getAbsolutePath(), tb1);
-            }
+        if (!modFile.exists()) {
+            FermiumPlugin.LOGGER.warn("Skipping non-existent file: {}", modFile);
+            return;
         }
-        finally
-        {
-            IOUtils.closeQuietly(fs);
+
+        try {
+            if (modFile.isDirectory()) {
+                processDirectory(modFile, modFile.toPath());
+            } else if (modFile.getName().endsWith(".jar")) {
+                processJarFile(modFile);
+            }
+        } catch (IOException e) {
+            FermiumPlugin.LOGGER.error("Failed to process mod file: {}", modFile, e);
         }
     }
+
+    private void processDirectory(File modFile, Path dir) throws IOException {
+        try (Stream<Path> stream = Files.walk(dir)) {
+            stream.filter(this::isClassFile)
+                  .forEach((file)->this.processClassFile(modFile, file));
+        }
+    }
+
+    private void processJarFile(File jarFile) throws IOException {
+        try (FileSystem fs = FileSystems.newFileSystem(jarFile.toPath(), (ClassLoader) null)) {
+            final Path root = fs.getPath("/");
+            Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (isClassFile(file)) {
+                        try (InputStream is = Files.newInputStream(file)) {
+                            processClassStream(jarFile, is);
+                        }
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            FermiumPlugin.LOGGER.error("Error processing JAR: {}", jarFile, e);
+            throw e;
+        }
+    }
+
+    private boolean isClassFile(Path path) {
+        return path.toString().endsWith(".class");
+    }
+
+
+    private void processClassStream(File modFile, InputStream is) {
+        try {
+            ClassReader classReader = new ClassReader(is);
+            ClassNode classNode = new ClassNode();
+            classReader.accept(classNode, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            if (classNode.interfaces != null) for (String itf : classNode.interfaces) {
+                this.datas.put(itf, new ASMData(modFile, classNode.name, classNode, itf, null));
+            }
+
+              if (classNode.visibleAnnotations != null) for (AnnotationNode annotationNode: classNode.visibleAnnotations) {
+                if (annotationNode.values == null || annotationNode.values.isEmpty()) {
+                       this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null));
+                } else {
+                    HashMap<String, Object> maps = new HashMap<>();
+                    annotationNode.accept(new ModAnnotationVisitor(maps));
+                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
+                }
+            }
+        } catch (Exception e) {
+            FermiumPlugin.LOGGER.error("Invalid class file", e);
+        }
+    }
+
+    private void processClassFile(File modFile, Path classPath) {
+        try (InputStream is = Files.newInputStream(classPath)) {
+            processClassStream(modFile, is);
+        } catch (IOException e) {
+            FermiumPlugin.LOGGER.error("Error reading class: {}", classPath, e);
+        }
+    }
+
 
     public static class ModAnnotationVisitor extends AnnotationVisitor {
         public Map<String, Object> map;
@@ -143,33 +151,28 @@ public class DiscoveryHandler {
     }
 
     public void build() {
-        List<Artifact> maven_canidates = LibraryManager.flattenLists(Launch.minecraftHome);
-        List<File> file_canidates = LibraryManager.gatherLegacyCanidates(Launch.minecraftHome);
-        // Find from core-locations
-        for (Artifact artifact : maven_canidates)
-        {
-            artifact = Repository.resolveAll(artifact);
-            if (artifact != null)
-            {
-                File target = artifact.getFile();
-                if (!file_canidates.contains(target))
-                    file_canidates.add(target);
-            }
-        }
-        File mods = new File(Launch.minecraftHome, "mods");
-        if (mods.exists() && mods.isDirectory()) {
-            File[] list = mods.listFiles();
-            if (list != null) {
-                Collections.addAll(file_canidates, list);
+        Set<File> allFiles = new LinkedHashSet<>();
+        
+        // // Add library files
+        // LibraryManager.flattenLists(Launch.minecraftHome).stream()
+        //     .map(Repository::resolveAll)
+        //     .filter(Objects::nonNull)
+        //     .map(Artifact::getFile)
+        //     .forEach(allFiles::add);
+        
+        // // Add legacy candidates
+        // allFiles.addAll(LibraryManager.gatherLegacyCanidates(Launch.minecraftHome));
+        
+        // Add mods directory
+        File modsDir = new File(Launch.minecraftHome, "mods");
+        if (modsDir.isDirectory()) {
+            File[] files = modsDir.listFiles();
+            if (files != null) {
+                Collections.addAll(allFiles, files);
             }
         }
 
-        Set<String> names = new HashSet<>();
-        for (File file : file_canidates) {
-            if (!names.contains(file.getAbsolutePath())) {
-                this.addFor(file);
-                names.add(file.getAbsolutePath());
-            }
-        }
+        // Process unique files
+        allFiles.forEach(this::addFor);
     }
 }

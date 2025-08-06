@@ -147,12 +147,14 @@ public class ConfigDiscover {
         public final boolean desired;
         public final boolean disableMixin;
         public final String reason;
+        public final boolean warnIngame;
 
         public CompatHandingRecord(AnnotationNode annotationNode) {
             this.modid = Annotations.getValue(annotationNode, "modid");
             this.desired = Annotations.getValue(annotationNode, "desired", Boolean.TRUE);
             this.disableMixin = Annotations.getValue(annotationNode, "disableMixin", Boolean.TRUE);
             this.reason = Annotations.getValue(annotationNode, "reason", "Undefined");
+            this.warnIngame = Annotations.getValue(annotationNode, "warnIngame", Boolean.FALSE);
         }
 
         @Override
@@ -162,6 +164,7 @@ public class ConfigDiscover {
                     ", desired=" + desired +
                     ", disableMixin=" + disableMixin +
                     ", reason='" + reason + '\'' +
+                    ", warnIngame=" + warnIngame + '\''+
                     '}';
         }
 

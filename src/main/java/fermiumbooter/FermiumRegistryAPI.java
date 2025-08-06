@@ -175,7 +175,13 @@ public abstract class FermiumRegistryAPI {
             boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
-                LOGGER.error(
+                if (!compat.warnIngame()) LOGGER.error(
+                  "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                  field.getName(), earlyMixin.name(),
+                  compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                  compat.desired() ? "without" : "with", 
+                  compat.modid(), compat.reason());
+                else LOGGER.warn(
                   "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
                   field.getName(), earlyMixin.name(),
                   compat.disableMixin() ? "disabled as incompatible" : "may have issues",
@@ -206,7 +212,13 @@ public abstract class FermiumRegistryAPI {
             boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
-                LOGGER.error(
+                if (!compat.warnIngame()) LOGGER.error(
+                  "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                  field.getName(), earlyMixin.name(),
+                  compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                  compat.desired() ? "without" : "with", 
+                  compat.modid(), compat.reason());
+                else LOGGER.warn(
                   "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
                   field.getName(), earlyMixin.name(),
                   compat.disableMixin() ? "disabled as incompatible" : "may have issues",
@@ -237,7 +249,13 @@ public abstract class FermiumRegistryAPI {
             if(FBConfig.overrideMixinCompatibilityChecks) {
               for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
                 if (compat.desired() != isModPresent(compat.modid())) {
-                  LOGGER.error(
+                  if (!compat.warnIngame()) LOGGER.error(
+                          "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                          field.getName(), mixinToggle.earlyMixin(),
+                          compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                          compat.desired() ? "without" : "with",
+                          compat.modid(), compat.reason());
+                  else LOGGER.warn(
                           "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
                           field.getName(), mixinToggle.earlyMixin(),
                           compat.disableMixin() ? "disabled as incompatible" : "may have issues",
@@ -263,7 +281,13 @@ public abstract class FermiumRegistryAPI {
             if(FBConfig.overrideMixinCompatibilityChecks) {
               for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
                 if (compat.desired() != isModPresent(compat.modid())) {
-                  LOGGER.error(
+                  if (!compat.warnIngame()) LOGGER.error(
+                          "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
+                          field.getName(), mixinToggle.lateMixin(),
+                          compat.disableMixin() ? "disabled as incompatible" : "may have issues",
+                          compat.desired() ? "without" : "with",
+                          compat.modid(), compat.reason());
+                  else LOGGER.warn(
                           "FermiumBooterDepoliticization annotated mixin config {} from {} {} {} {}: {}.",
                           field.getName(), mixinToggle.lateMixin(),
                           compat.disableMixin() ? "disabled as incompatible" : "may have issues",

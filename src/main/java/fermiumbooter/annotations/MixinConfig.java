@@ -42,6 +42,7 @@ public @interface MixinConfig {
 	@interface CompatHandling {
 		String modid();
 		boolean desired() default true;
+		boolean warnIngame() default false;
 		boolean disableMixin() default true;
 		String reason() default "Undefined";
 	}
