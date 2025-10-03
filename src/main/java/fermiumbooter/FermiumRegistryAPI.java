@@ -129,7 +129,9 @@ public abstract class FermiumRegistryAPI {
   
   // why static instead of dynamic
   public static boolean isModPresent(String modid) {
-    return (activeContext != null && activeContext.isModPresent(modid)) || mods.contains(modid);
+    return (activeContext != null && activeContext.isModPresent(modid))
+      || (mods != null && mods.contains(modid))
+      || FBConfig.Utils.forcedEarlyMixinConfigLoadedModsSet.contains(modid);
   }
 
   // crazy config handler, fermuim is too crazy.
@@ -320,8 +322,6 @@ public abstract class FermiumRegistryAPI {
     earlyMixins = null;
     lateMixins = null;
     rejectMixins = null;
-    activeContext = null;
-    mods = null;
   }
   
 }

@@ -15,6 +15,9 @@ public class FBConfig {
 	@Config.Name("Forced Early Mixin Config Removals")
 	public static String[] forcedEarlyMixinConfigRemovals = {};
 
+	@Config.Name("Forced Early Mixin Config Loaded Mods")
+	public static String[] forcedEarlyMixinConfigLoadedMods = {};
+
 	@Config.Name("Display UpdateHelper at Log")
 	public static boolean displayUpdateHelperAtLog = false;
 
@@ -23,5 +26,7 @@ public class FBConfig {
 
 	public static class Utils {
 		public static final Set<String> forcedEarlyMixinConfigAdditionsSet = new HashSet<>(Arrays.asList(FBConfig.forcedEarlyMixinConfigAdditions));
+
+		public static final Set<String> forcedEarlyMixinConfigLoadedModsSet = new HashSet<>(Arrays.asList(FBConfig.forcedEarlyMixinConfigLoadedMods));
 	}
 }
