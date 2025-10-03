@@ -129,7 +129,15 @@ public abstract class FermiumRegistryAPI {
   
   // why static instead of dynamic
   public static boolean isModPresent(String modid) {
-    return (activeContext != null && activeContext.isModPresent(modid)) || mods.contains(modid);
+    if (modid.equals("optifine")) {
+      try {
+        Class.forName("net.optifine.Log");
+        return true;
+      } catch (ClassNotFoundException ignored) {
+        return false;
+      }
+    }
+    return Arrays.asList(FBConfig.forcedEarlyMixinConfigLoadedMods).contains(modid) || (activeContext != null && activeContext.isModPresent(modid)) || (mods != null && mods.contains(modid));
   }
 
   // crazy config handler, fermuim is too crazy.
