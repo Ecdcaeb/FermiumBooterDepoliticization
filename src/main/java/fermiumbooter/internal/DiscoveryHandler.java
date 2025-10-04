@@ -43,6 +43,10 @@ public class DiscoveryHandler {
             this.annName = annName;
             this.values = values;
         }
+
+        public String toString() {
+            return "Source :" + source + "\n class : " + className + "\n annotation description : " + annName + "\n address :" +super.toString();
+        }
     }
     public final SetMultimap<String, ASMData> datas = HashMultimap.create();
 
@@ -77,12 +81,14 @@ public class DiscoveryHandler {
     private void processJarFile(File jarFile) throws IOException {
         try (FileSystem fs = FileSystems.newFileSystem(jarFile.toPath(), (ClassLoader) null)) {
             final Path root = fs.getPath("/");
-            Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), 1, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(root, EnumSet.noneOf(FileVisitOption.class), 99, new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (isClassFile(file)) {
                         try (InputStream is = Files.newInputStream(file)) {
                             processClassStream(jarFile, is);
+                        } catch (Throwable t) {
+
                         }
                     }
                     return FileVisitResult.CONTINUE;
@@ -110,11 +116,15 @@ public class DiscoveryHandler {
 
               if (classNode.visibleAnnotations != null) for (AnnotationNode annotationNode: classNode.visibleAnnotations) {
                 if (annotationNode.values == null || annotationNode.values.isEmpty()) {
-                       this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null));
+                    ASMData asmData = new ASMData(modFile, classNode.name, classNode, annotationNode.desc, null);
+                    this.datas.put(annotationNode.desc, asmData);
+                    FermiumPlugin.LOGGER.debug("process Ann : {}", asmData);
                 } else {
                     HashMap<String, Object> maps = new HashMap<>();
                     annotationNode.accept(new ModAnnotationVisitor(maps));
-                    this.datas.put(annotationNode.desc, new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps));
+                    ASMData asmData = new ASMData(modFile, classNode.name, classNode, annotationNode.desc, maps);
+                    this.datas.put(annotationNode.desc, asmData);
+                    FermiumPlugin.LOGGER.debug("process Ann : {}", asmData);
                 }
             }
         } catch (Exception e) {
@@ -170,6 +180,10 @@ public class DiscoveryHandler {
             if (files != null) {
                 Collections.addAll(allFiles, files);
             }
+        }
+
+        for (File f : allFiles) {
+            FermiumPlugin.LOGGER.debug("ADD SCAN JAR : {}", f);
         }
 
         // Process unique files

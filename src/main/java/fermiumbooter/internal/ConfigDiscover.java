@@ -13,9 +13,7 @@ import org.spongepowered.asm.util.Annotations;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -27,6 +25,7 @@ public class ConfigDiscover {
         HashMap<String, String> configMap = new HashMap<>();
         File configDir = new File(Launch.minecraftHome, "config");
         for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lfermiumbooter/annotations/MixinConfig;")) {
+            LOGGER.debug("FOUND CONFIG CLASS {}", asmData.className);
             if (asmData.values != null && asmData.values.containsKey("name")) {
                 String name = (String) asmData.values.get("name");
                 if (!configMap.containsKey(name)) {
@@ -58,17 +57,13 @@ public class ConfigDiscover {
                         final String earlyMixin = Annotations.getValue(mixinToggle, "earlyMixin", (String) null);
                         final String lateMixin = Annotations.getValue(mixinToggle, "lateMixin", (String) null);
                         final boolean defaultValue = Annotations.getValue(mixinToggle, "defaultValue", Boolean.FALSE);
-                        final HashSet<CompatHandingRecord> compatHandingRecords = new HashSet<>();
-                        {
-                            AnnotationNode compatHandlings = Annotations.getVisible(fn, MixinConfig.CompatHandlings.class);
-                            if (compatHandlings != null) {
-                                AnnotationNode[] compatHandlingArray = Annotations.getValue(compatHandlings, "value", (AnnotationNode[]) null);
-                                if (compatHandlingArray != null) {
-                                    for (AnnotationNode node : compatHandlingArray) {
-                                        compatHandingRecords.add(new CompatHandingRecord(node));
-                                    }
-                                }
-                            }
+                        LOGGER.debug("FOUND CONFIG ELEMENT {}", fn.name);
+                        LOGGER.debug("EARLY {}", earlyMixin);
+                        LOGGER.debug("LATE {}", lateMixin);
+                        LOGGER.debug("DEFAULT {}", defaultValue);
+                        final HashSet<CompatHandingRecord> compatHandingRecords = parseCompatHandlings(fn);
+                        for (CompatHandingRecord compatHandingRecord : compatHandingRecords) {
+                            LOGGER.debug("CompatHandingRecord : {}", compatHandingRecord);
                         }
 
                         final boolean configValue;
@@ -80,6 +75,7 @@ public class ConfigDiscover {
                                 } else configValue = defaultValue;
                             } else configValue = defaultValue;
                         }
+                        LOGGER.debug("VAR {}", configValue);
 
                         if (earlyMixin != null) {
                             if (compatHandingRecords.isEmpty()) {
@@ -87,7 +83,7 @@ public class ConfigDiscover {
                             } else {
                                 FermiumRegistryAPI.enqueueMixin(false, earlyMixin, ()->
                                 {
-                                    if(FBConfig.overrideMixinCompatibilityChecks) {
+                                    if(!FBConfig.overrideMixinCompatibilityChecks) {
                                         for (CompatHandingRecord compat : compatHandingRecords) {
                                             if (compat.desired != FermiumRegistryAPI.isModPresent(compat.modid)) {
                                                 LOGGER.error(
@@ -112,7 +108,7 @@ public class ConfigDiscover {
                             } else {
                                 FermiumRegistryAPI.enqueueMixin(true, lateMixin, ()->
                                 {
-                                    if(FBConfig.overrideMixinCompatibilityChecks) {
+                                    if(!FBConfig.overrideMixinCompatibilityChecks) {
                                         boolean disableMixin = false;
                                         for (CompatHandingRecord compat : compatHandingRecords) {
                                             if (compat.desired != FermiumRegistryAPI.isModPresent(compat.modid)) {
@@ -157,6 +153,18 @@ public class ConfigDiscover {
             this.warnIngame = Annotations.getValue(annotationNode, "warnIngame", Boolean.FALSE);
         }
 
+        public CompatHandingRecord(String modid,
+                boolean desired,
+                boolean disableMixin,
+                String reason,
+                boolean warnIngame) {
+            this.modid = modid;
+            this.desired = desired;
+            this.disableMixin = disableMixin;
+            this.reason = reason;
+            this.warnIngame = warnIngame;
+        }
+
         @Override
         public String toString() {
             return "CompatHandingRecord{" +
@@ -185,4 +193,92 @@ public class ConfigDiscover {
             return result;
         }
     }
+
+
+    public static HashSet<CompatHandingRecord> parseCompatHandlings(FieldNode fieldNode) {
+        HashSet<CompatHandingRecord> records = new HashSet<>();
+        
+        if (fieldNode.visibleAnnotations == null) {
+            return records;
+        }
+
+        for (AnnotationNode annotation : fieldNode.visibleAnnotations) {
+            if ("Lfermiumbooter/annotations/MixinConfig$CompatHandling;".equals(annotation.desc)) {
+                CompatHandingRecord record = parseSingleCompatHandling(annotation);
+                if (record != null) {
+                    records.add(record);
+                }
+            }
+            else if ("Lfermiumbooter/annotations/MixinConfig$CompatHandlings;".equals(annotation.desc)) {
+                List<AnnotationNode> handlingAnnotations = extractHandlingAnnotationsFromContainer(annotation);
+                for (AnnotationNode handlingAnnotation : handlingAnnotations) {
+                    CompatHandingRecord record = parseSingleCompatHandling(handlingAnnotation);
+                    if (record != null) {
+                        records.add(record);
+                    }
+                }
+            }
+        }
+
+        return records;
+    }
+
+    private static CompatHandingRecord parseSingleCompatHandling(AnnotationNode annotation) {
+        String modid = null;
+        boolean desired = true; 
+        boolean disableMixin = true;
+        String reason = "Undefined";
+        boolean warnIngame = false; 
+
+        if (annotation.values == null) {
+            return null;
+        }
+
+        for (int i = 0; i < annotation.values.size(); i += 2) {
+            String key = (String) annotation.values.get(i);
+            Object value = annotation.values.get(i + 1);
+
+            switch (key) {
+                case "modid":
+                    modid = (String) value;
+                    break;
+                case "desired":
+                    desired = (Boolean) value;
+                    break;
+                case "disableMixin":
+                    disableMixin = (Boolean) value;
+                    break;
+                case "reason":
+                    reason = (String) value;
+                    break;
+                case "warnIngame":
+                    warnIngame = (Boolean) value;
+                    break;
+            }
+        }
+
+        if (modid == null) {
+            return null;
+        }
+
+        return new CompatHandingRecord(modid, desired, disableMixin, reason, warnIngame);
+    }
+
+    private static List<AnnotationNode> extractHandlingAnnotationsFromContainer(AnnotationNode containerAnnotation) {
+        if (containerAnnotation.values == null) {
+            return new ArrayList();
+        }
+
+        for (int i = 0; i < containerAnnotation.values.size(); i += 2) {
+            String key = (String) containerAnnotation.values.get(i);
+            if ("value".equals(key)) {
+                @SuppressWarnings("unchecked")
+                List<AnnotationNode> value = (List<AnnotationNode>) containerAnnotation.values.get(i + 1);
+                return value;
+            }
+        }
+
+        return new ArrayList();
+    }
+    
 }

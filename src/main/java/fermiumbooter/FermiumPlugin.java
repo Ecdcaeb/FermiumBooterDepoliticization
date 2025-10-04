@@ -72,7 +72,9 @@ public class FermiumPlugin
     for (DiscoveryHandler.ASMData asmData : discoveryHandler.datas.get("Lnet/minecraftforge/fml/common/Mod;")) {
       if (asmData.values != null) {
         if (asmData.values.containsKey("modid")) {
-          FermiumRegistryAPI.mods.add((String) asmData.values.get("modid"));
+          String modId = (String) asmData.values.get("modid");
+          FermiumRegistryAPI.mods.add(modId);
+          LOGGER.debug("FOUND MODID {}", modId);
         }
         if (asmData.values.containsKey("dependencies")) {
           if (((String)asmData.values.get("dependencies")).contains(":fermiumbooter")) {
@@ -114,9 +116,6 @@ public class FermiumPlugin
           return true;
         }
       }
-      FermiumPlugin.LOGGER.debug(
-          "FermiumBooter received null value for suppliers from \""
-          + mixinConfig.mixinConfig() + "\" for early mixin application, ignoring.");
       return false;
     }
   }
