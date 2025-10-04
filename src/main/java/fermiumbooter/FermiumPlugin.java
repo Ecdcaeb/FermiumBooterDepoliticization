@@ -61,6 +61,14 @@ public class FermiumPlugin
   }
 
   public static void init() {
+    // init special mod checks
+    try {
+        Class.forName("net.optifine.Log");
+        mods.add("optifine");
+      } catch (ClassNotFoundException ignored) {
+    }
+    //
+    
     DiscoveryHandler discoveryHandler = new DiscoveryHandler();
     discoveryHandler.build();
     for (String str : FBConfig.forcedEarlyMixinConfigRemovals) {
