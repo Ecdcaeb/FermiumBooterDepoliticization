@@ -126,9 +126,15 @@ public abstract class FermiumRegistryAPI {
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
     rejectMixins.add(configuration);
   }
+
+  public static boolean isModPresent(String modid) {
+    boolean r = isModPresent0(modid);
+    LOGGER.debug("FermiumRegistryAPI : {} is {} present", modid, r);
+    return r;
+  }
   
   // why static instead of dynamic
-  public static boolean isModPresent(String modid) {
+  public static boolean isModPresent0(String modid) {
     return (activeContext != null && activeContext.isModPresent(modid))
       || (mods != null && mods.contains(modid))
       || FBConfig.Utils.forcedEarlyMixinConfigLoadedModsSet.contains(modid);
@@ -173,7 +179,7 @@ public abstract class FermiumRegistryAPI {
         final Field field = f;
         enqueueMixin(false, earlyMixin.name(), ()->
         {
-          if(FBConfig.overrideMixinCompatibilityChecks) {
+          if(!FBConfig.overrideMixinCompatibilityChecks) {
             boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
@@ -210,7 +216,7 @@ public abstract class FermiumRegistryAPI {
         final Field field = f;
         enqueueMixin(true, earlyMixin.name(), ()->
         {
-          if(FBConfig.overrideMixinCompatibilityChecks) {
+          if(!FBConfig.overrideMixinCompatibilityChecks) {
             boolean disableMixin = false;
             for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
               if (compat.desired() != isModPresent(compat.modid())) {
@@ -248,7 +254,7 @@ public abstract class FermiumRegistryAPI {
         if (StringUtils.isNotEmpty(mixinToggle.earlyMixin())) {
           enqueueMixin(false, mixinToggle.earlyMixin(), ()->
           {
-            if(FBConfig.overrideMixinCompatibilityChecks) {
+            if(!FBConfig.overrideMixinCompatibilityChecks) {
               for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
                 if (compat.desired() != isModPresent(compat.modid())) {
                   if (!compat.warnIngame()) LOGGER.error(
@@ -280,7 +286,7 @@ public abstract class FermiumRegistryAPI {
         if (StringUtils.isNotEmpty(mixinToggle.lateMixin())) {
           enqueueMixin(true, mixinToggle.lateMixin(), ()->
           {
-            if(FBConfig.overrideMixinCompatibilityChecks) {
+            if(!FBConfig.overrideMixinCompatibilityChecks) {
               for (MixinConfig.CompatHandling compat : field.getAnnotationsByType(MixinConfig.CompatHandling.class)) {
                 if (compat.desired() != isModPresent(compat.modid())) {
                   if (!compat.warnIngame()) LOGGER.error(
