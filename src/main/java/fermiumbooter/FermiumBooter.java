@@ -61,13 +61,10 @@ public class FermiumBooter
           FermiumRegistryAPI.getLateMixins().get(mixinConfig.mixinConfig())) {
         if (supplier.getAsBoolean()) {
           FermiumPlugin.LOGGER.debug("FermiumBooter adding \"" + mixinConfig.mixinConfig()
-              + "\" for early mixin application.");
+              + "\" for late mixin application.");
           return true;
         }
       }
-      FermiumPlugin.LOGGER.debug(
-          "FermiumBooter received null value for suppliers from \""
-          + mixinConfig.mixinConfig() + "\" for early mixin application, ignoring.");
       return false;
     }
   }
