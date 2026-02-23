@@ -26,6 +26,9 @@ import com.cleanroommc.configanytime.ConfigAnytime;
 public class FermiumPlugin
     implements IFMLLoadingPlugin, zone.rong.mixinbooter.IEarlyMixinLoader {
   static {
+    try {
+        Launch.classLoader.findClass("fermiumbooter.FermiumRegistryAPI"); // force classLoader include
+    } catch (Throwable ignored) { }
     ConfigAnytime.register(FBConfig.class);
   }
   
