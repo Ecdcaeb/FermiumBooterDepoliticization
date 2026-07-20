@@ -12,7 +12,6 @@ import com.cleanroommc.configanytime.ConfigAnytime;
 import fermiumbooter.internal.FBConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
-import org.spongepowered.asm.launch.GlobalProperties;
 import fermiumbooter.annotations.MixinConfig;
 
 /**
@@ -31,10 +30,7 @@ public abstract class FermiumRegistryAPI {
   @Deprecated private static Collection<String> rejectMixins;
 
   static {
-    if (GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS) == null) {
-      GlobalProperties.put(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS, new HashSet<>());
-    }
-    rejectMixins = (Collection<String>) GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS);
+    rejectMixins = new HashSet<>();
   }
   /**
    * Register multiple mixin config resources at once to be applied
