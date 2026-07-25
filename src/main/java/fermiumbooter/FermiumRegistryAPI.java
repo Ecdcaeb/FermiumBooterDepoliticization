@@ -30,11 +30,27 @@ public abstract class FermiumRegistryAPI {
   @Deprecated private static Multimap<String, BooleanSupplier> lateMixins = HashMultimap.create();
   @Deprecated private static Collection<String> rejectMixins;
 
-  static {
-    if (GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS) == null) {
-      GlobalProperties.put(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS, new HashSet<>());
+    static {
+    try {
+      // Try to use GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS (available in older Cleanroom/CleanMix)
+      Object key = GlobalProperties.Keys.class.getField("CLEANROOM_DISABLE_MIXIN_CONFIGS").get(null);
+      // Use reflection to call GlobalProperties.get/put since key is Object at compile time
+      java.lang.reflect.Method getMethod = GlobalProperties.class.getMethod("get", GlobalProperties.Keys.class);
+      java.lang.reflect.Method putMethod = GlobalProperties.class.getMethod("put", GlobalProperties.Keys.class, Object.class);
+      Object existing = getMethod.invoke(null, key);
+      if (existing == null) {
+        putMethod.invoke(null, key, new HashSet<>());
+      }
+      rejectMixins = (Collection<String>) getMethod.invoke(null, key);
+    } catch (NoSuchFieldException e) {
+      // Cleanroom 6.0+ removed CLEANROOM_DISABLE_MIXIN_CONFIGS from GlobalProperties.Keys
+      // Fall back to a local HashSet
+      LOGGER.info("CLEANROOM_DISABLE_MIXIN_CONFIGS not found in GlobalProperties.Keys, using local rejectMixins (Cleanroom 6.0+)");
+      rejectMixins = new HashSet<>();
+    } catch (Exception e) {
+      LOGGER.error("Failed to initialize rejectMixins via GlobalProperties, falling back to local HashSet", e);
+      rejectMixins = new HashSet<>();
     }
-    rejectMixins = (Collection<String>) GlobalProperties.get(GlobalProperties.Keys.CLEANROOM_DISABLE_MIXIN_CONFIGS);
   }
   /**
    * Register multiple mixin config resources at once to be applied
