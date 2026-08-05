@@ -126,12 +126,6 @@ public abstract class FermiumRegistryAPI {
     LOGGER.debug("FermiumRegistryAPI : {} is {} present", modid, r);
     return r;
   }
-
-  public static boolean isModPresent(String modid) {
-    boolean r = isModPresent0(modid);
-    LOGGER.debug("FermiumRegistryAPI : {} is {} present", modid, r);
-    return r;
-  }
   
   // why static instead of dynamic
   public static boolean isModPresent0(String modid) {
