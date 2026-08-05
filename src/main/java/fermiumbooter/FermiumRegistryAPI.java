@@ -12,6 +12,7 @@ import com.cleanroommc.configanytime.ConfigAnytime;
 import fermiumbooter.internal.FBConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.mixin.transformer.Config;
 import fermiumbooter.annotations.MixinConfig;
 
 /**
@@ -27,11 +28,7 @@ public abstract class FermiumRegistryAPI {
 
   @Deprecated private static Multimap<String, BooleanSupplier> earlyMixins = HashMultimap.create();
   @Deprecated private static Multimap<String, BooleanSupplier> lateMixins = HashMultimap.create();
-  @Deprecated private static Collection<String> rejectMixins;
-
-  static {
-    rejectMixins = new HashSet<>();
-  }
+  @Deprecated private static Collection<String> rejectMixins = new HashSet<>();
   /**
    * Register multiple mixin config resources at once to be applied
    * @param late - whether to apply the mixin late or early
@@ -121,6 +118,13 @@ public abstract class FermiumRegistryAPI {
     }
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
     rejectMixins.add(configuration);
+    Config.blacklist(configuration);
+  }
+
+  public static boolean isModPresent(String modid) {
+    boolean r = isModPresent0(modid);
+    LOGGER.debug("FermiumRegistryAPI : {} is {} present", modid, r);
+    return r;
   }
 
   public static boolean isModPresent(String modid) {
