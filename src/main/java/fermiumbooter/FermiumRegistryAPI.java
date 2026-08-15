@@ -28,7 +28,6 @@ public abstract class FermiumRegistryAPI {
 
   @Deprecated private static Multimap<String, BooleanSupplier> earlyMixins = HashMultimap.create();
   @Deprecated private static Multimap<String, BooleanSupplier> lateMixins = HashMultimap.create();
-  @Deprecated private static Collection<String> rejectMixins = new HashSet<>();
   /**
    * Register multiple mixin config resources at once to be applied
    * @param late - whether to apply the mixin late or early
@@ -117,7 +116,6 @@ public abstract class FermiumRegistryAPI {
       return;
     }
     LOGGER.debug("FermiumRegistryAPI supplied \"" + configuration + "\" for mixin removal, adding.");
-    rejectMixins.add(configuration);
     Config.blacklist(configuration);
   }
 
@@ -146,8 +144,6 @@ public abstract class FermiumRegistryAPI {
     if (earlyMixins == null)
       throw new IllegalStateException("Mixins should be registered before ModConstruction");
     if (lateMixins == null)
-      throw new IllegalStateException("Mixins should be registered before ModConstruction");
-    if (rejectMixins == null)
       throw new IllegalStateException("Mixins should be registered before ModConstruction");
   }
 
@@ -321,7 +317,6 @@ public abstract class FermiumRegistryAPI {
     // :)
     earlyMixins = null;
     lateMixins = null;
-    rejectMixins = null;
   }
   
 }
